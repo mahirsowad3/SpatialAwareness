@@ -4,7 +4,9 @@ package com.example.mahir.spatialawareness;
 import android.graphics.SurfaceTexture;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.SparseIntArray;
 import android.view.TextureView;
+import android.view.View;
 import android.widget.Button;
 
 
@@ -12,6 +14,8 @@ public class MainActivity extends AppCompatActivity {
 
     private Button btnCapture;
     private TextureView textureView;
+
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +29,7 @@ public class MainActivity extends AppCompatActivity {
         textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener() {
             @Override
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
-
+                openCamera();
             }
 
             @Override
@@ -43,5 +47,21 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
+
+        btnCapture = findViewById(R.id.btnCapture);
+        btnCapture.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                takePicture();
+            }
+        });
+    }
+
+    private void takePicture(){
+
+    }
+
+    private void openCamera(){
+
     }
 }
