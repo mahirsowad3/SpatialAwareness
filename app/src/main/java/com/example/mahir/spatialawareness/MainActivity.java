@@ -5,9 +5,11 @@ import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
@@ -15,10 +17,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Size;
+import android.view.Surface;
 import android.view.TextureView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -29,6 +33,16 @@ public class MainActivity extends AppCompatActivity {
     private CameraDevice mCameraDevice;
     private String mCameraId;
     private Size mPreviewSize;
+    private CaptureRequest mPreviewCaptureRequest;
+    private CaptureRequest.Builder mPreviewCaptureRequestBuilder;
+    private CameraCaptureSession mCameraCaptureSession;
+
+    private CameraCaptureSession.CaptureCallback mSessionCaptureCallback = new CameraCaptureSession.CaptureCallback() {
+        @Override
+        public void onCaptureStarted(@NonNull CameraCaptureSession session, @NonNull CaptureRequest request, long timestamp, long frameNumber) {
+            super.onCaptureStarted(session, request, timestamp, frameNumber);
+        }
+    };
 
     private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -57,7 +71,8 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onOpened(@NonNull CameraDevice camera) {
             mCameraDevice = camera;
-            Toast.makeText(getApplicationContext(), "Camera Opened!", Toast.LENGTH_SHORT).show();
+            createCameraPreviewSession();
+            //Toast.makeText(getApplicationContext(), "Camera Opened!", Toast.LENGTH_SHORT).show();
         }
 
         @Override
@@ -72,6 +87,7 @@ public class MainActivity extends AppCompatActivity {
             mCameraDevice = null;
         }
     };
+
 
     @Override
     public void onResume(){
@@ -152,6 +168,39 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, "No permission granted", Toast.LENGTH_LONG).show();
             }
             cameraManager.openCamera(mCameraId, mCameraDeviceStateCallback, null);
+        }catch(CameraAccessException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void createCameraPreviewSession(){
+        try{
+            SurfaceTexture surfaceTexture = mTextureView.getSurfaceTexture();
+            surfaceTexture.setDefaultBufferSize(mPreviewSize.getWidth(), mPreviewSize.getHeight());
+            Surface previewSurface = new Surface(surfaceTexture);
+            mPreviewCaptureRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            mPreviewCaptureRequestBuilder.addTarget(previewSurface);
+            mCameraDevice.createCaptureSession(Arrays.asList(previewSurface), new CameraCaptureSession.StateCallback() {
+                @Override
+                public void onConfigured(@NonNull CameraCaptureSession session) {
+                    if(mCameraDevice == null){
+                        return;
+                    }
+                    try{
+                        mPreviewCaptureRequest = mPreviewCaptureRequestBuilder.build();
+                        mCameraCaptureSession = session;
+                        mCameraCaptureSession.setRepeatingRequest(mPreviewCaptureRequest, mSessionCaptureCallback, null);
+                    }catch(CameraAccessException e){
+                        e.printStackTrace();
+                    }
+                }
+
+                @Override
+                public void onConfigureFailed(@NonNull CameraCaptureSession session) {
+                    Toast.makeText(getApplicationContext(), "create camera session failed!", Toast.LENGTH_SHORT).show();
+                }
+            }, null);
+
         }catch(CameraAccessException e){
             e.printStackTrace();
         }
