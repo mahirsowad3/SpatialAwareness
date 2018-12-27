@@ -1,16 +1,22 @@
 package com.example.mahir.spatialawareness;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Size;
 import android.view.TextureView;
+import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -20,7 +26,7 @@ import java.util.List;
 public class MainActivity extends AppCompatActivity {
 
     TextureView mTextureView;
-    CameraDevice cameraDevice;
+    private CameraDevice mCameraDevice;
     private String mCameraId;
     private Size mPreviewSize;
 
@@ -28,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height) {
             setUpCamera(width, height);
+            openCamera();
         }
 
         @Override
@@ -43,6 +50,26 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onSurfaceTextureUpdated(SurfaceTexture surface) {
 
+        }
+    };
+
+    private CameraDevice.StateCallback mCameraDeviceStateCallback = new CameraDevice.StateCallback() {
+        @Override
+        public void onOpened(@NonNull CameraDevice camera) {
+            mCameraDevice = camera;
+            Toast.makeText(getApplicationContext(), "Camera Opened!", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onDisconnected(@NonNull CameraDevice camera) {
+            camera.close();
+            mCameraDevice = null;
+        }
+
+        @Override
+        public void onError(@NonNull CameraDevice camera, int error) {
+            camera.close();
+            mCameraDevice = null;
         }
     };
 
@@ -116,5 +143,17 @@ public class MainActivity extends AppCompatActivity {
             });
         }
         return mapSizes[0];
+    }
+
+    private void openCamera(){
+        CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        try{
+            if ( ContextCompat.checkSelfPermission( this, Manifest.permission.CAMERA ) != PackageManager.PERMISSION_GRANTED ) {
+                Toast.makeText(this, "No permission granted", Toast.LENGTH_LONG).show();
+            }
+            cameraManager.openCamera(mCameraId, mCameraDeviceStateCallback, null);
+        }catch(CameraAccessException e){
+            e.printStackTrace();
+        }
     }
 }
