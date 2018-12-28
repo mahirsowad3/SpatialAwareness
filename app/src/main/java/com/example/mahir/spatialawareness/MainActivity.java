@@ -11,6 +11,8 @@ import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -36,6 +38,8 @@ public class MainActivity extends AppCompatActivity {
     private CaptureRequest mPreviewCaptureRequest;
     private CaptureRequest.Builder mPreviewCaptureRequestBuilder;
     private CameraCaptureSession mCameraCaptureSession;
+    private HandlerThread mBackgroundThread;
+    private Handler mBackgroundHandler;
 
     private CameraCaptureSession.CaptureCallback mSessionCaptureCallback = new CameraCaptureSession.CaptureCallback() {
         @Override
@@ -43,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
             super.onCaptureStarted(session, request, timestamp, frameNumber);
         }
     };
+
+
 
     private TextureView.SurfaceTextureListener mSurfaceTextureListener = new TextureView.SurfaceTextureListener() {
         @Override
@@ -93,11 +99,21 @@ public class MainActivity extends AppCompatActivity {
     public void onResume(){
         super.onResume();
 
-        if(mTextureView.isAvailable()){
+        openBackgroundThread();
 
+        if(mTextureView.isAvailable()){
+            setUpCamera(mTextureView.getWidth(), mTextureView.getHeight());
+            openCamera();
         }else{
             mTextureView.setSurfaceTextureListener(mSurfaceTextureListener);
         }
+    }
+
+    @Override
+    public void onPause(){
+        closeCamera();
+        closeBackgroundThread();
+        super.onPause();
     }
 
     @Override
@@ -112,10 +128,6 @@ public class MainActivity extends AppCompatActivity {
     private void takePicture(){
 
     }
-
-
-
-
 
     private void setUpCamera(int width, int height){
         CameraManager cameraManager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
@@ -167,9 +179,20 @@ public class MainActivity extends AppCompatActivity {
             if ( ContextCompat.checkSelfPermission( this, Manifest.permission.CAMERA ) != PackageManager.PERMISSION_GRANTED ) {
                 Toast.makeText(this, "No permission granted", Toast.LENGTH_LONG).show();
             }
-            cameraManager.openCamera(mCameraId, mCameraDeviceStateCallback, null);
+            cameraManager.openCamera(mCameraId, mCameraDeviceStateCallback, mBackgroundHandler);
         }catch(CameraAccessException e){
             e.printStackTrace();
+        }
+    }
+
+    private void closeCamera(){
+        if(mCameraCaptureSession != null){
+            mCameraCaptureSession.close();
+            mCameraCaptureSession = null;
+        }
+        if(mCameraDevice != null){
+            mCameraDevice.close();
+            mCameraDevice = null;
         }
     }
 
@@ -189,7 +212,7 @@ public class MainActivity extends AppCompatActivity {
                     try{
                         mPreviewCaptureRequest = mPreviewCaptureRequestBuilder.build();
                         mCameraCaptureSession = session;
-                        mCameraCaptureSession.setRepeatingRequest(mPreviewCaptureRequest, mSessionCaptureCallback, null);
+                        mCameraCaptureSession.setRepeatingRequest(mPreviewCaptureRequest, mSessionCaptureCallback, mBackgroundHandler);
                     }catch(CameraAccessException e){
                         e.printStackTrace();
                     }
@@ -202,6 +225,23 @@ public class MainActivity extends AppCompatActivity {
             }, null);
 
         }catch(CameraAccessException e){
+            e.printStackTrace();
+        }
+    }
+
+    private void openBackgroundThread(){
+        mBackgroundThread = new HandlerThread("Camera2 background thread");
+        mBackgroundThread.start();
+        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+    }
+
+    private void closeBackgroundThread(){
+        mBackgroundThread.quitSafely();
+        try{
+            mBackgroundThread.join();
+            mBackgroundThread = null;
+            mBackgroundHandler = null;
+        }catch(InterruptedException e){
             e.printStackTrace();
         }
     }
