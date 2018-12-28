@@ -32,7 +32,7 @@ import java.util.Vector;
  */
 public class MainActivity extends CameraActivity implements OnImageAvailableListener {
     private static final String MODEL_FILE = "file:///android_asset/ssd_mobilenet_v2.pb";
-    private static final String LABELS_FILE = "pet_label.txt";
+    private static final String LABELS_FILE = "labels.txt";
 
     // Minimum detection confidence to track a detection.
     private static final float MINIMUM_CONFIDENCE_TF_OD_API = 0.6f;
@@ -237,7 +237,7 @@ public class MainActivity extends CameraActivity implements OnImageAvailableList
 
     @Override
     protected int getLayoutId() {
-        return R.layout.camera_connection_fragment_tracking;
+        return R.layout.activity_camera_connection_fragment;
     }
 
     @Override

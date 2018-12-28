@@ -14,7 +14,7 @@ import android.util.Pair;
 import android.util.TypedValue;
 import android.widget.Toast;
 
-import pp.petdetector.Classifier.Recognition;
+import com.example.mahir.spatialawareness.Classifier.Recognition;
 import com.example.mahir.spatialawareness.env.BorderedText;
 import com.example.mahir.spatialawareness.env.ImageUtils;
 import com.example.mahir.spatialawareness.env.Logger;
