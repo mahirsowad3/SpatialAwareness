@@ -20,6 +20,7 @@ import java.util.Vector;
 
 import javax.microedition.khronos.opengles.GL10;
 
+
 /**
  * True object detector/tracker class that tracks objects across consecutive preview frames.
  * It provides a simplified Java interface to the analogous native object defined by
