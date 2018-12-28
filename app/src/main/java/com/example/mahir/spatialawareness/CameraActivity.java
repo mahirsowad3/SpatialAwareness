@@ -24,8 +24,8 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.Toast;
 import java.nio.ByteBuffer;
-import pp.petdetector.env.ImageUtils;
-import pp.petdetector.env.Logger;
+import com.example.mahir.spatialawareness.env.ImageUtils;
+import com.example.mahir.spatialawareness.env.Logger;
 
 public abstract class CameraActivity extends AppCompatActivity
         implements OnImageAvailableListener {
