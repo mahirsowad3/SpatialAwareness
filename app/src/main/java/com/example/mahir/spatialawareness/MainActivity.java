@@ -29,6 +29,8 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import org.tensorflow.lite.Interpreter;
+
 public class MainActivity extends AppCompatActivity {
 
     TextureView mTextureView;
@@ -40,6 +42,8 @@ public class MainActivity extends AppCompatActivity {
     private CameraCaptureSession mCameraCaptureSession;
     private HandlerThread mBackgroundThread;
     private Handler mBackgroundHandler;
+
+    Interpreter tflite;
 
     private CameraCaptureSession.CaptureCallback mSessionCaptureCallback = new CameraCaptureSession.CaptureCallback() {
         @Override
